@@ -1,0 +1,3 @@
+notebooks/label_encoders.pkl
+notebooks/malaria_full_pipeline.joblib
+notebooks/malaria_preprocessor.joblib
