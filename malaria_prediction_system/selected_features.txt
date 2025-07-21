@@ -1,0 +1,67 @@
+4wk_std
+true_malaria_cases_rolling_std_4
+threshold
+true_malaria_cases_lag_4
+true_malaria_cases_rolling_mean_12
+is_public
+true_malaria_cases
+true_malaria_cases_transformed
+12wk_moving_avg
+true_malaria_cases_rolling_std_12
+average_longitude
+4wk_avg
+is_index
+Humidity_lag_1
+prop_5_14_age
+true_malaria_cases_rolling_mean_8
+prop_female
+prop_<5_age
+average_latitude
+is_private
+true_malaria_cases_lag_1
+Week
+is_other_member
+Max Temperature_lag_3
+true_malaria_cases_rolling_mean_4
+occ_student
+Rainfall_lag_1
+prop_male
+Humidity_lag_4
+Rainfall_lag_3
+prop_30_44_age
+true_malaria_cases_lag_2
+true_malaria_cases_rolling_std_8
+Rainfall_lag_2
+Month
+Rainfall_lag_4
+Rainfall_transformed
+Max Temperature
+Max Temperature_lag_2
+true_malaria_cases_lag_3
+Humidity_lag_3
+Humidity_lag_2
+Min Temperature
+occ_watchman
+Humidity
+Max Temperature_lag_4
+Humidity_transformed
+Min Temperature_lag_4
+prop_15_29_age
+Min Temperature_lag_1
+prop_45+_age
+Min Temperature_lag_3
+Rainfall
+month_cos
+occ_housewife
+occ_fisherman
+Temperature_Range
+Effective_Net_Usage_lag_3
+month_sin
+Min Temperature_lag_2
+Effective_Net_Usage_lag_4
+occ_farmer
+Max Temperature_lag_1
+Effective_Net_Usage_lag_2
+Effective_Net_Usage_lag_1
+Year
+IRS_Coverage

@@ -1,0 +1,23 @@
+{
+    "train_date_range": {
+        "start": "2018-01-01",
+        "end": "2022-10-10"
+    },
+    "model_type": "RandomForestClassifier",
+    "version": "1.0.0",
+    "required_features": [
+        "District",
+        "average_latitude",
+        "average_longitude",
+        "Year",
+        "Month",
+        "Week",
+        "Humidity",
+        "Rainfall",
+        "Min Temperature",
+        "Max Temperature",
+        "temp_range",
+        "Effective_Net_Usage",
+        "IRS_Coverage"
+    ]
+}

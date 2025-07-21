@@ -1,0 +1,4 @@
+4wk_std
+true_malaria_cases_rolling_std_4
+threshold
+true_malaria_cases_lag_4

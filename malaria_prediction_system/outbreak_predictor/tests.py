@@ -1,0 +1,4 @@
+from django.test import TestCase
+
+# Create your tests here.
+{'District': np.int64(0), 'average_latitude': 5.6, 'average_longitude': 35.9, 'Year': 2025, 'Month': 12, 'Week': 12, 'Humidity': 100.0, 'Rainfall': 100.0, 'Min Temperature': 24.0, 'Max Temperature': 32.0, 'temp_range': 8.0, 'temp_humidity': 2800.0, 'Effective_Net_Usage': 30.0, 'IRS_Coverage': 39.0, 'prop_male': 1, 'prop_female': 0, 'prop_<5_age': 0, 'prop_5_14_age': 0, 'prop_15_29_age': 0, 'prop_30_44_age': 0, 'prop_45+_age': 0, 'is_index': 0, 'is_additional_index': 1, 'is_other_member': 0, 'is_private': 0, 'is_public': 1, 'occ_student': 1, 'occ_health_worker': 0, 'occ_police_officer': 0, 'occ_watchman': 0, 'occ_farmer': 0, 'occ_fisherman': 0, 'occ_unemployed': 0, 'occ_housewife': 0, 'occ_business_owner': 0}

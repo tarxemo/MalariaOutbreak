@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Prediction Result</h1>
+        <p class="text-gray-600">Week {{ week }}, {{ year }} | {{ district }}</p>
+    </div>
+    
+    <div class="bg-{% if outbreak == 'HIGH RISK' %}red{% else %}green{% endif %}-50 p-6 rounded-lg mb-6">
+        <div class="flex items-center justify-center">
+            <div class="mr-4">
+                <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-{% if outbreak == 'HIGH RISK' %}red{% else %}green{% endif %}-100">
+                    <svg class="h-6 w-6 text-{% if outbreak == 'HIGH RISK' %}red{% else %}green{% endif %}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {% if outbreak == 'HIGH RISK' %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        {% else %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        {% endif %}
+                    </svg>
+                </span>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800">Risk Level: {{ outbreak }}</h2>
+                <p class="text-sm text-gray-600">Probability: {{ probability }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-6">
+        <h3 class="text-md font-medium text-gray-700 mb-2">Interpretation</h3>
+        {% if outbreak == 'HIGH RISK' %}
+        <p class="text-red-700 bg-red-50 p-3 rounded-md">
+            There is a high probability of malaria outbreak in this district. 
+            Recommended actions: Increase vector control measures, prepare health facilities, 
+            and alert community health workers.
+        </p>
+        {% else %}
+        <p class="text-green-700 bg-green-50 p-3 rounded-md">
+            The malaria outbreak risk is currently low. Maintain surveillance 
+            and continue standard prevention measures.
+        </p>
+        {% endif %}
+    </div>
+    
+    <div class="bg-gray-50 p-4 rounded-md">
+        <h3 class="text-md font-medium text-gray-700 mb-2">Prediction Details</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Date of Prediction</p>
+                <p class="font-medium">{{ date }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Confidence Level</p>
+                <p class="font-medium">{{ probability }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex justify-between">
+        <a href="{% url 'predict' %}" 
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            Make Another Prediction
+        </a>
+        <a href="{% url 'dashboard' %}" 
+            class="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700">
+            View All Predictions
+        </a>
+    </div>
+</div>
+{% endblock %}

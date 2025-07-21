@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malaria Prediction Form</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        .form-step {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .form-step.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .step-icon {
+            transition: all 0.3s ease;
+            background-color: #f6f33b;
+        }
+        .step-icon.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .step-icon.completed {
+            background-color: #10b981;
+            color: white;
+        }
+        input, select{
+            outline: none;
+            color: white;
+        }
+                /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #f8f9fa;
+            margin: 10% auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 80%;
+            max-width: 600px;
+            animation: modalFadeIn 0.3s;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        /* Prediction result styles */
+        .risk-meter {
+            height: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            background: linear-gradient(to right, #4CAF50, #FFC107, #F44336);
+            position: relative;
+        }
+        
+        .risk-indicator {
+            position: absolute;
+            top: -10px;
+            width: 2px;
+            height: 50px;
+            background: black;
+            transform: translateX(-50%);
+        }
+        
+        .risk-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        
+        .risk-low { color: #4CAF50; }
+        .risk-medium { color: #FFC107; }
+        .risk-high { color: #F44336; }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
+
+            
+        {% if prediction %}
+        <!-- Prediction Result Modal -->
+        <div id="predictionModal" class="modal" style="display: block;">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-chart-line text-blue-500 mr-2"></i>
+                    Malaria Risk Prediction Results
+                </h2>
+                
+                <div class="bg-white rounded-lg p-6 shadow-inner">
+                    <!-- Location Info -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-500">District</p>
+                            <p class="font-semibold">{{ prediction.district }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Date Period</p>
+                            <p class="font-semibold">Week {{ prediction.week }}, {{ prediction.month }}/{{ prediction.year }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Meter -->
+                    <div class="mb-6">
+                        <p class="text-sm text-gray-500 mb-1">Malaria Risk Level</p>
+                        <div class="risk-meter">
+                            <div class="risk-indicator" style="left: calc({{ prediction.prediction }}% - 1px);"></div>
+                        </div>
+                        <div class="risk-labels">
+                            <span class="risk-low">Low (0-30%)</span>
+                            <span class="risk-medium">Medium (31-70%)</span>
+                            <span class="risk-high">High (71-100%)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Prediction Value -->
+                    <div class="text-center mb-6">
+                        <p class="text-4xl font-bold 
+                            {% if prediction.prediction > 70 %}text-red-600
+                            {% elif prediction.prediction > 30 %}text-yellow-500
+                            {% else %}text-green-600{% endif %}">
+                            {{ prediction.prediction|floatformat:1 }}%
+                        </p>
+                        <p class="text-gray-600 mt-1">Probability of Malaria Outbreak</p>
+                    </div>
+                    
+                    <!-- Environmental Factors -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-500">Humidity</p>
+                            <p class="font-semibold">{{ prediction.humidity }}%</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Rainfall</p>
+                            <p class="font-semibold">{{ prediction.rainfall }} mm</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Min Temp</p>
+                            <p class="font-semibold">{{ prediction.min_temperature }}°C</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Max Temp</p>
+                            <p class="font-semibold">{{ prediction.max_temperature }}°C</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Interpretation -->
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-blue-800 mb-2">Interpretation</h3>
+                        <p class="text-sm text-blue-700">
+                            {% if prediction.prediction > 70 %}
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-1"></i>
+                            High risk of malaria outbreak. Immediate preventive measures recommended.
+                            {% elif prediction.prediction > 30 %}
+                            <i class="fas fa-exclamation-circle text-yellow-500 mr-1"></i>
+                            Moderate risk of malaria. Consider increased surveillance and prevention.
+                            {% else %}
+                            <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                            Low risk of malaria. Maintain standard preventive measures.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex justify-end mt-6">
+                        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg mr-2">
+                            Close
+                        </button>
+                        <button onclick="window.location.href='{% url 'view_predictions' %}'" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                            View All Predictions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    <div class="bg-gray-800 rounded-xl shadow-lg w-full max-w-4xl p-6">
+        <!-- Stepper -->
+        <div class="mb-8">
+            <ol class="flex items-center w-full">
+                <li class="flex items-center w-full after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-4 after:inline-block">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full step-icon active shrink-0">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-100">Location</span>
+                </li>
+                <li class="flex items-center w-full after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-4 after:inline-block">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full step-icon shrink-0">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-100">Demographics</span>
+                </li>
+                <li class="flex items-center w-full after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-4 after:inline-block">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full step-icon shrink-0">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-100">Environment</span>
+                </li>
+                <li class="flex items-center">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full step-icon shrink-0">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-100">Controls</span>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Step 1: Location -->
+            <div class="form-step active" id="step1">
+                <h2 class="text-2xl font-bold text-gray-100 mb-6 flex items-center">
+                    <i class="fas fa-map-marker-alt text-blue-500 mr-3"></i>
+                    Location Information
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- District Select -->
+                    <div x-data="enhancedSelect({
+                        name: 'District',
+                        options: ['CHAKE-CHAKE', 'KASKAZINI A', 'KASKAZINI B', 'KATI', 'KUSINI', 'MAGHARIBI A', 'MAGHARIBI B', 'MICHEWENI', 'MJINI', 'MKOANI', 'WETE'],
+                        placeholder: 'Select or search district...',
+                        label: 'District'
+                    })" class="relative">
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1" x-text="label"></label>
+                        <select :name="name" x-ref="hiddenSelect" class="hidden">
+                            <template x-for="option in options" :key="option">
+                                <option :value="option" x-text="option"></option>
+                            </template>
+                        </select>
+                        <div @click.away="open = false" class="relative">
+                            <input
+                                type="text"
+                                :placeholder="placeholder"
+                                x-model="search"
+                                @focus="open = true"
+                                @input="filterOptions"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition"
+                            />
+                            <ul
+                                x-show="open"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg max-h-36 overflow-y-auto shadow-lg"
+                            >
+                                <template x-for="(option, index) in filtered" :key="index">
+                                    <li
+                                        @click="selectOption(option)"
+                                        class="cursor-pointer px-4 py-2 bg-gray-900 text-gray-200 hover:text-[#FFE31A] transition"
+                                        x-text="option"
+                                    ></li>
+                                </template>
+                                <li x-show="filtered.length === 0" class="px-4 py-2 text-gray-400">No match</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Date</label>
+                        <input type="date" id="dateInput" name="date" required 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Average Latitude</label>
+                        <input type="number" step="any" id="latitudeInput" name="average_latitude" required 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Average Longitude</label>
+                        <input type="number" step="any" id="longitudeInput" name="average_longitude" required 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end mt-8">
+                    <button type="button" onclick="nextStep(1, 2)" 
+                            class="px-6 py-2 text-gray-900 text-white rounded-lg  transition flex items-center">
+                        Next <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Demographics -->
+            <div class="form-step" id="step2">
+                <h2 class="text-2xl font-bold text-gray-100 mb-6 flex items-center">
+                    <i class="fas fa-user text-blue-500 mr-3"></i>
+                    Demographic Information
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Gender Select -->
+                    <div x-data="enhancedSelect({
+                        name: 'gender',
+                        options: ['male', 'female'],
+                        placeholder: 'Select gender...',
+                        label: 'Gender'
+                    })" class="relative">
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1" x-text="label"></label>
+                        <select :name="name" x-ref="hiddenSelect" class="hidden">
+                            <template x-for="option in options" :key="option">
+                                <option :value="option" x-text="option"></option>
+                            </template>
+                        </select>
+                        <div @click.away="open = false" class="relative">
+                            <input
+                                type="text"
+                                :placeholder="placeholder"
+                                x-model="search"
+                                @focus="open = true"
+                                @input="filterOptions"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition"
+                            />
+                            <ul
+                                x-show="open"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg max-h-36 overflow-y-auto shadow-lg"
+                            >
+                                <template x-for="(option, index) in filtered" :key="index">
+                                    <li
+                                        @click="selectOption(option)"
+                                        class="cursor-pointer px-4 py-2 bg-gray-900 text-gray-200 hover:text-[#FFE31A] transition"
+                                        x-text="option"
+                                    ></li>
+                                </template>
+                                <li x-show="filtered.length === 0" class="px-4 py-2 text-gray-400">No match</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Age Group Select -->
+                    <div x-data="enhancedSelect({
+                        name: 'age_group',
+                        options: ['<5', '5-14', '15-29', '30-44', '45+'],
+                        placeholder: 'Select age group...',
+                        label: 'Age Group'
+                    })" class="relative">
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1" x-text="label"></label>
+                        <select :name="name" x-ref="hiddenSelect" class="hidden">
+                            <template x-for="option in options" :key="option">
+                                <option :value="option" x-text="option"></option>
+                            </template>
+                        </select>
+                        <div @click.away="open = false" class="relative">
+                            <input
+                                type="text"
+                                :placeholder="placeholder"
+                                x-model="search"
+                                @focus="open = true"
+                                @input="filterOptions"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition"
+                            />
+                            <ul
+                                x-show="open"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg max-h-36 overflow-y-auto shadow-lg"
+                            >
+                                <template x-for="(option, index) in filtered" :key="index">
+                                    <li
+                                        @click="selectOption(option)"
+                                        class="cursor-pointer px-4 py-2 bg-gray-900 text-gray-200 hover:text-[#FFE31A] transition"
+                                        x-text="option"
+                                    ></li>
+                                </template>
+                                <li x-show="filtered.length === 0" class="px-4 py-2 text-gray-400">No match</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Member Type Select -->
+                    <div x-data="enhancedSelect({
+                        name: 'member_type',
+                        options: ['index', 'additional_index', 'other'],
+                        placeholder: 'Select member type...',
+                        label: 'Member Type'
+                    })" class="relative">
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1" x-text="label"></label>
+                        <select :name="name" x-ref="hiddenSelect" class="hidden">
+                            <template x-for="option in options" :key="option">
+                                <option :value="option" x-text="option"></option>
+                            </template>
+                        </select>
+                        <div @click.away="open = false" class="relative">
+                            <input
+                                type="text"
+                                :placeholder="placeholder"
+                                x-model="search"
+                                @focus="open = true"
+                                @input="filterOptions"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition"
+                            />
+                            <ul
+                                x-show="open"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg max-h-36 overflow-y-auto shadow-lg"
+                            >
+                                <template x-for="(option, index) in filtered" :key="index">
+                                    <li
+                                        @click="selectOption(option)"
+                                        class="cursor-pointer px-4 py-2 bg-gray-900 text-gray-200 hover:text-[#FFE31A] transition"
+                                        x-text="option"
+                                    ></li>
+                                </template>
+                                <li x-show="filtered.length === 0" class="px-4 py-2 text-gray-400">No match</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Facility Type Select -->
+                    <div x-data="enhancedSelect({
+                        name: 'facility_type',
+                        options: ['public', 'private'],
+                        placeholder: 'Select facility type...',
+                        label: 'Facility Type'
+                    })" class="relative">
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1" x-text="label"></label>
+                        <select :name="name" x-ref="hiddenSelect" class="hidden">
+                            <template x-for="option in options" :key="option">
+                                <option :value="option" x-text="option"></option>
+                            </template>
+                        </select>
+                        <div @click.away="open = false" class="relative">
+                            <input
+                                type="text"
+                                :placeholder="placeholder"
+                                x-model="search"
+                                @focus="open = true"
+                                @input="filterOptions"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition"
+                            />
+                            <ul
+                                x-show="open"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg max-h-36 overflow-y-auto shadow-lg"
+                            >
+                                <template x-for="(option, index) in filtered" :key="index">
+                                    <li
+                                        @click="selectOption(option)"
+                                        class="cursor-pointer px-4 py-2 bg-gray-900 text-gray-200 hover:text-[#FFE31A] transition"
+                                        x-text="option"
+                                    ></li>
+                                </template>
+                                <li x-show="filtered.length === 0" class="px-4 py-2 text-gray-400">No match</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Occupation Select -->
+                    <div x-data="enhancedSelect({
+                        name: 'occupation',
+                        options: ['student', 'health_worker', 'police_officer', 'watchman', 'farmer', 'fisherman', 'unemployed', 'housewife', 'business_owner'],
+                        placeholder: 'Select occupation...',
+                        label: 'Occupation'
+                    })" class="relative md:col-span-2">
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1" x-text="label"></label>
+                        <select :name="name" x-ref="hiddenSelect" class="hidden">
+                            <template x-for="option in options" :key="option">
+                                <option :value="option" x-text="option"></option>
+                            </template>
+                        </select>
+                        <div @click.away="open = false" class="relative">
+                            <input
+                                type="text"
+                                :placeholder="placeholder"
+                                x-model="search"
+                                @focus="open = true"
+                                @input="filterOptions"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition"
+                            />
+                            <ul
+                                x-show="open"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg max-h-36 overflow-y-auto shadow-lg"
+                            >
+                                <template x-for="(option, index) in filtered" :key="index">
+                                    <li
+                                        @click="selectOption(option)"
+                                        class="cursor-pointer px-4 py-2 bg-gray-900 text-gray-200 hover:text-[#FFE31A] transition"
+                                        x-text="option"
+                                    ></li>
+                                </template>
+                                <li x-show="filtered.length === 0" class="px-4 py-2 text-gray-400">No match</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="prevStep(2, 1)" 
+                            class="px-6 py-2 bg-gray-200 text-[#FFE31A] rounded-lg hover:bg-gray-300 transition flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Back
+                    </button>
+                    <button type="button" onclick="nextStep(2, 3)" 
+                            class="px-6 py-2 text-gray-900 text-white rounded-lg transition flex items-center">
+                        Next <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Environment -->
+            <div class="form-step" id="step3">
+                <h2 class="text-2xl font-bold text-gray-100 mb-6 flex items-center">
+                    <i class="fas fa-cloud-sun text-blue-500 mr-3"></i>
+                    Environmental Conditions
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Humidity (%)</label>
+                        <input type="number" step="any" name="Humidity" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Rainfall (mm)</label>
+                        <input type="number" step="any" name="Rainfall" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Min Temperature (°C)</label>
+                        <input type="number" step="any" name="Min_Temperature" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Max Temperature (°C)</label>
+                        <input type="number" step="any" name="Max_Temperature" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="prevStep(3, 2)" 
+                            class="px-6 py-2 bg-gray-200 text-[#FFE31A] rounded-lg hover:bg-gray-300 transition flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Back
+                    </button>
+                    <button type="button" onclick="nextStep(3, 4)" 
+                            class="px-6 py-2 text-gray-900 text-white rounded-lg  transition flex items-center">
+                        Next <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Controls -->
+            <div class="form-step" id="step4">
+                <h2 class="text-2xl font-bold text-gray-100 mb-6 flex items-center">
+                    <i class="fas fa-shield-alt text-blue-500 mr-3"></i>
+                    Malaria Control Measures
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">Effective Net Usage (%)</label>
+                        <input type="number" step="any" name="Effective_Net_Usage" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                        <p class="text-xs text-gray-100 mt-1">Percentage of population using bed nets effectively</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#FFE31A] mb-1">IRS Coverage (%)</label>
+                        <input type="number" step="any" name="IRS_Coverage" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-600 text-white transition">
+                        <p class="text-xs text-gray-100 mt-1">Percentage of households covered by Indoor Residual Spraying</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="prevStep(4, 3)" 
+                            class="px-6 py-2 bg-gray-200 text-[#FFE31A] rounded-lg hover:bg-gray-300 transition flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Back
+                    </button>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i> Submit Prediction
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function enhancedSelect(config) {
+            return {
+                open: false,
+                search: '',
+                name: config.name,
+                options: config.options,
+                placeholder: config.placeholder,
+                label: config.label,
+                filtered: [],
+                init() {
+                    this.filtered = this.options;
+                },
+                filterOptions() {
+                    this.filtered = this.options.filter(option =>
+                        option.toLowerCase().includes(this.search.toLowerCase())
+                    );
+                },
+                selectOption(option) {
+                    this.search = option;
+                    this.open = false;
+                    // Set hidden select value
+                    const select = this.$refs.hiddenSelect;
+                    for (let optionEl of select.options) {
+                        optionEl.selected = optionEl.value === option;
+                    }
+                }
+            }
+        }
+
+        function updateStepper(currentStep) {
+            const steps = document.querySelectorAll('.step-icon');
+            steps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < currentStep - 1) {
+                    step.classList.add('completed');
+                } else if (index === currentStep - 1) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function nextStep(current, next) {
+            document.getElementById(`step${current}`).classList.remove('active');
+            document.getElementById(`step${next}`).classList.add('active');
+            updateStepper(next);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function prevStep(current, prev) {
+            document.getElementById(`step${current}`).classList.remove('active');
+            document.getElementById(`step${prev}`).classList.add('active');
+            updateStepper(prev);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+        <script>
+                // Set the min date to tomorrow
+    const dateInput = document.getElementById("dateInput");
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd = String(tomorrow.getDate()).padStart(2, '0');
+
+    dateInput.min = `${yyyy}-${mm}-${dd}`;
+
+    const form = document.querySelector("form");
+
+    form.addEventListener("submit", function (e) {
+        const lat = parseFloat(document.getElementById("latitudeInput").value);
+        const lon = parseFloat(document.getElementById("longitudeInput").value);
+
+        const latMin = -6.4, latMax = -5.5;
+        const lonMin = 39.1, lonMax = 39.9;
+
+        if (isNaN(lat) || isNaN(lon)) {
+            e.preventDefault();
+            alert("Please enter valid numeric values for both latitude and longitude.");
+            return;
+        }
+
+        if (lat < latMin || lat > latMax || lon < lonMin || lon > lonMax) {
+            e.preventDefault();
+            alert(
+                `Coordinates are out of range.\n\n` +
+                `Valid Latitude: ${latMin} to ${latMax}\n` +
+                `Valid Longitude: ${lonMin} to ${lonMax}\n\n` +
+                `Please enter a location within Zanzibar boundaries.`
+            );
+        }
+    });
+
+        // Modal functions
+        function closeModal() {
+            document.getElementById('predictionModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('predictionModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        
+        // Auto-show modal if prediction exists
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if prediction %}
+            document.getElementById('predictionModal').style.display = 'block';
+            {% endif %}
+        });
+
+
+document.querySelector("form").addEventListener("submit", function (e) {
+    // Get all input values
+    const humidity = parseFloat(document.querySelector("[name='Humidity']").value);
+    const rainfall = parseFloat(document.querySelector("[name='Rainfall']").value);
+    const minTemp = parseFloat(document.querySelector("[name='Min_Temperature']").value);
+    const maxTemp = parseFloat(document.querySelector("[name='Max_Temperature']").value);
+
+    // Initialize an error message collector
+    let errors = [];
+
+    // Validation rules
+    if (isNaN(humidity) || humidity < 30 || humidity > 100) {
+        errors.push("Humidity must be between 30% and 100%.");
+    }
+
+    if (isNaN(rainfall) || rainfall < 0 || rainfall > 600) {
+        errors.push("Rainfall must be between 0 and 600 mm.");
+    }
+
+    if (isNaN(minTemp) || minTemp < 15 || minTemp > 30) {
+        errors.push("Min Temperature must be between 15°C and 30°C.");
+    }
+
+    if (isNaN(maxTemp) || maxTemp < 20 || maxTemp > 45) {
+        errors.push("Max Temperature must be between 20°C and 45°C.");
+    }
+
+    if (!isNaN(minTemp) && !isNaN(maxTemp) && minTemp > maxTemp) {
+        errors.push("Min Temperature cannot be higher than Max Temperature.");
+    }
+
+    // If errors found, stop form submission and alert
+    if (errors.length > 0) {
+        e.preventDefault();
+        alert("Please correct the following:\n\n" + errors.join("\n"));
+    }
+});
+
+
+
+
+document.querySelector("form").addEventListener("submit", function (e) {
+    let errors = [];
+
+    // ✅ Percent Validations
+    const percentFields = [
+        { name: "Effective_Net_Usage", label: "Effective Net Usage" },
+        { name: "IRS_Coverage", label: "IRS Coverage" },
+    ];
+
+    percentFields.forEach(field => {
+        const input = document.querySelector(`[name="${field.name}"]`);
+        const value = parseFloat(input.value);
+        if (isNaN(value) || value < 0 || value > 100) {
+            errors.push(`${field.label} must be between 0% and 100%.`);
+        }
+    });
+
+    // ✅ Latitude/Longitude Validation (Zanzibar Range)
+    const latitude = parseFloat(document.querySelector('[name="average_latitude"]').value);
+    const longitude = parseFloat(document.querySelector('[name="average_longitude"]').value);
+    if (latitude < -7.5 || latitude > -5.0 || isNaN(latitude)) {
+        errors.push("Latitude must be between -7.5 and -5.0 (Zanzibar region).");
+    }
+    if (longitude < 38.0 || longitude > 40.0 || isNaN(longitude)) {
+        errors.push("Longitude must be between 38.0 and 40.0 (Zanzibar region).");
+    }
+
+    // ✅ Humidity Validation
+    const humidity = parseFloat(document.querySelector('[name="Humidity"]').value);
+    if (isNaN(humidity) || humidity < 0 || humidity > 100) {
+        errors.push("Humidity must be between 0% and 100%.");
+    }
+
+    // ✅ Rainfall Validation (Assuming realistic range 0–600 mm)
+    const rainfall = parseFloat(document.querySelector('[name="Rainfall"]').value);
+    if (isNaN(rainfall) || rainfall < 0 || rainfall > 600) {
+        errors.push("Rainfall must be between 0 and 600 mm.");
+    }
+
+    // ✅ Temperature Validation
+    const minTemp = parseFloat(document.querySelector('[name="Min_Temperature"]').value);
+    const maxTemp = parseFloat(document.querySelector('[name="Max_Temperature"]').value);
+
+    if (isNaN(minTemp) || minTemp < 10 || minTemp > 35) {
+        errors.push("Min Temperature should be between 10°C and 35°C.");
+    }
+
+    if (isNaN(maxTemp) || maxTemp < 15 || maxTemp > 45) {
+        errors.push("Max Temperature should be between 15°C and 45°C.");
+    }
+
+    // ✅ Show errors if any
+    if (errors.length > 0) {
+        e.preventDefault();
+        alert("Form submission blocked:\n\n" + errors.join("\n"));
+    }
+});
+
+    </script>
+</body>
+</html>
